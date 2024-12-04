@@ -46,20 +46,34 @@ def plot_raw_data():
 plot_raw_data()
 
 # Prepare data for Prophet
+# Prepare data for Prophet
 df_train = data[['Date', 'Close']]
 df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
 
-# Clean data
-df_train['ds'] = pd.to_datetime(df_train['ds'])  # Ensure datetime format
-df_train['y'] = pd.to_numeric(df_train['y'], errors='coerce')  # Ensure numeric values
-df_train = df_train.dropna()  # Drop rows with invalid data
+# Debugging the initial DataFrame
+st.write("Debugging df_train before cleaning:")
+st.write(df_train.head())
+st.write("Type of df_train:")
+st.write(type(df_train))
+st.write("Columns in df_train:")
+st.write(df_train.columns)
+st.write("Type of df_train['y'] (if exists):")
+if 'y' in df_train.columns:
+    st.write(type(df_train['y']))
+else:
+    st.error("'y' column is missing!")
 
-# Debugging output
-st.subheader("Cleaned Data for Prophet")
+# Clean data
+df_train['ds'] = pd.to_datetime(df_train['ds'], errors='coerce')  # Ensure datetime format
+df_train['y'] = pd.to_numeric(df_train['y'], errors='coerce')  # Ensure numeric values
+df_train = df_train.dropna(subset=['y'])  # Drop rows with NaN values in 'y'
+
+# Final debug
 st.write("Cleaned df_train:")
 st.write(df_train.head())
-st.write("Data types in df_train:")
-st.write(df_train.dtypes)
+st.write("Type of df_train['y'] after cleaning:")
+st.write(type(df_train['y']))
+
 
 # Initialize and fit Prophet model
 m = Prophet()
