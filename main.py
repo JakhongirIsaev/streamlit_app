@@ -21,7 +21,7 @@ n_years = st.slider("Years of prediction:", 1, 4)
 period = n_years * 365
 
 # Function to load data
-@st.cache_data
+@st.cache_data  # Use @st.cache if your Streamlit version is below 1.18.0
 def load_data(ticker):
     data = yf.download(ticker, START, TODAY)
     data.reset_index(inplace=True)
@@ -46,7 +46,17 @@ def plot_raw_data():
 plot_raw_data()
 
 # Prepare data for Prophet
-df_train = data[['Date', 'Close']].rename(columns={"Date": "ds", "Close": "y"})
+df_train = data[['Date']].copy()
+
+# Handle multi-level columns for 'Close'
+if isinstance(data.columns, pd.MultiIndex):
+    # Extract the first column under 'Close'
+    df_train['y'] = data['Close'].iloc[:, 0].values
+else:
+    df_train['y'] = data['Close']
+
+# Rename 'Date' to 'ds' for Prophet
+df_train.rename(columns={'Date': 'ds'}, inplace=True)
 
 # Debugging the initial DataFrame
 st.write("Debugging df_train before cleaning:")
@@ -56,8 +66,8 @@ st.write(df_train.dtypes)
 
 # Clean data
 df_train['ds'] = pd.to_datetime(df_train['ds'], errors='coerce')  # Ensure datetime format
-df_train['y'] = pd.to_numeric(df_train['y'], errors='coerce')  # Ensure numeric values
-df_train = df_train.dropna(subset=['y'])  # Drop rows with NaN values in 'y'
+df_train['y'] = pd.to_numeric(df_train['y'], errors='coerce')     # Ensure numeric values
+df_train.dropna(subset=['ds', 'y'], inplace=True)                 # Drop rows with NaN in 'ds' or 'y'
 
 # Final debug
 st.write("Cleaned df_train:")
@@ -65,26 +75,30 @@ st.write(df_train.head())
 st.write("Data types in df_train after cleaning:")
 st.write(df_train.dtypes)
 
-# Initialize and fit Prophet model
-m = Prophet()
+# Ensure there is sufficient data
+if df_train.empty:
+    st.error("No data available for the selected stock and date range. Please select a different stock or adjust the date range.")
+else:
+    # Initialize and fit Prophet model
+    m = Prophet()
 
-# Fit the model
-m.fit(df_train)
+    # Fit the model
+    m.fit(df_train)
 
-# Create future dates and forecast
-future = m.make_future_dataframe(periods=period)
-forecast = m.predict(future)
+    # Create future dates and forecast
+    future = m.make_future_dataframe(periods=period)
+    forecast = m.predict(future)
 
-# Display forecast data
-st.subheader("Forecast Data")
-st.write(forecast.tail())
+    # Display forecast data
+    st.subheader("Forecast Data")
+    st.write(forecast.tail())
 
-# Plot forecast data
-st.write("Forecast Plot")
-fig1 = plot_plotly(m, forecast)
-st.plotly_chart(fig1)
+    # Plot forecast data
+    st.write("Forecast Plot")
+    fig1 = plot_plotly(m, forecast)
+    st.plotly_chart(fig1)
 
-# Display forecast components
-st.write("Forecast Components")
-fig2 = m.plot_components(forecast)
-st.pyplot(fig2)
+    # Display forecast components
+    st.write("Forecast Components")
+    fig2 = m.plot_components(forecast)
+    st.pyplot(fig2)
