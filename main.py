@@ -4,6 +4,7 @@ import yfinance as yf
 from prophet import Prophet
 from prophet.plot import plot_plotly
 from plotly import graph_objs as go
+import pandas as pd
 
 START = "2018-01-01"
 TODAY = date.today().strftime("%Y-%m-%d")
@@ -38,9 +39,29 @@ def plot_raw_data():
 
 plot_raw_data()
 
+
+
+
+
 # Forecasting
 df_train = data[['Date', 'Close']]
 df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
+
+# Prepare data for Prophet
+df_train = data[['Date', 'Close']]
+df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
+
+# Clean data
+df_train['ds'] = pd.to_datetime(df_train['ds'])  # Ensure datetime format
+df_train['y'] = pd.to_numeric(df_train['y'], errors='coerce')  # Ensure numeric values
+df_train = df_train.dropna()  # Drop rows with invalid data
+
+# Debugging output
+st.write("Cleaned df_train:")
+st.write(df_train.head())
+st.write("Data types in df_train:")
+st.write(df_train.dtypes)
+
 
 m = Prophet()
 st.write("Inspecting df_train before fitting the model:")
@@ -52,7 +73,10 @@ m.fit(df_train)
 future = m.make_future_dataframe(periods=period)
 forecast = m.predict(future)
 
-st.write(f'Forecast plot for {n_years} years')
+st.subheader('Forecast data')
+st.write(forecast.tail())
+
+st.write("Forecast data")
 fig1 = plot_plotly(m, forecast)
 st.plotly_chart(fig1)
 
