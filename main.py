@@ -28,7 +28,7 @@ def load_data(ticker):
     return data
 
 # Load and display data
-data_load_state = st.text("Load data...")
+data_load_state = st.text("Loading data...")
 data = load_data(selected_stocks)
 data_load_state.text("Loading data... done!")
 
@@ -38,30 +38,21 @@ st.write(data.tail())
 # Function to plot raw data
 def plot_raw_data():
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name='stock_open'))
-    fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name='stock_close'))
+    fig.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name='Stock Open'))
+    fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name='Stock Close'))
     fig.layout.update(title_text="Time Series Data", xaxis_rangeslider_visible=True)
     st.plotly_chart(fig)
 
 plot_raw_data()
 
 # Prepare data for Prophet
-# Prepare data for Prophet
-df_train = data[['Date', 'Close']]
-df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
+df_train = data[['Date', 'Close']].rename(columns={"Date": "ds", "Close": "y"})
 
 # Debugging the initial DataFrame
 st.write("Debugging df_train before cleaning:")
 st.write(df_train.head())
-st.write("Type of df_train:")
-st.write(type(df_train))
-st.write("Columns in df_train:")
-st.write(df_train.columns)
-st.write("Type of df_train['y'] (if exists):")
-if 'y' in df_train.columns:
-    st.write(type(df_train['y']))
-else:
-    st.error("'y' column is missing!")
+st.write("Data types in df_train:")
+st.write(df_train.dtypes)
 
 # Clean data
 df_train['ds'] = pd.to_datetime(df_train['ds'], errors='coerce')  # Ensure datetime format
@@ -71,18 +62,11 @@ df_train = df_train.dropna(subset=['y'])  # Drop rows with NaN values in 'y'
 # Final debug
 st.write("Cleaned df_train:")
 st.write(df_train.head())
-st.write("Type of df_train['y'] after cleaning:")
-st.write(type(df_train['y']))
-
+st.write("Data types in df_train after cleaning:")
+st.write(df_train.dtypes)
 
 # Initialize and fit Prophet model
 m = Prophet()
-
-# Additional debug info before model fitting
-st.write("Inspecting df_train before fitting the model:")
-st.write(df_train.head())
-st.write("Data types of df_train:")
-st.write(df_train.dtypes)
 
 # Fit the model
 m.fit(df_train)
@@ -92,7 +76,7 @@ future = m.make_future_dataframe(periods=period)
 forecast = m.predict(future)
 
 # Display forecast data
-st.subheader('Forecast Data')
+st.subheader("Forecast Data")
 st.write(forecast.tail())
 
 # Plot forecast data
