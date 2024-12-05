@@ -13,7 +13,7 @@ TODAY = date.today().strftime("%Y-%m-%d")
 st.title("Stock Prediction Webapp by Jakhongir")
 
 # Dropdown menu for stock selection
-stocks = ("AAPL", "GOOG", "MSFT", "GME", "NVDA", "TSLA", "NFLX", "BTC-USD", "META", "AMZN", "DOGE-USD")
+stocks = ("AAPL", "GOOG", "MSFT", "BTC-USD", "DOGE-USD")
 selected_stocks = st.selectbox("Select dataset for prediction", stocks)
 
 # Slider for the prediction period
